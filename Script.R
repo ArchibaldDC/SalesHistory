@@ -17,8 +17,9 @@ df_store <- tibble(the_transaction_id = paste("trans", seq(1,200000), sep = "_")
                    the_date_transaction = sample(seq(as.Date("2019/01/01"), as.Date("2019/12/31"), by = "day"),
                                                  200000, replace = T),
                    sku_idr_sku = paste(sample(c("tennis_item", "football_item", "running_item", "biking_item", 
-                                                "other_item"), replace = T),
-                                       sample(c(1:500), replace = T), sep = "_")) 
+                                                "other_item"), 200000, replace = T),
+                                       sample(c(1:500), replace = T), sep = "_"),
+                   ) 
 
 
 
