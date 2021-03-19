@@ -22,14 +22,19 @@ df_temp <- tibble(the_transaction_id = paste("trans", seq(1,200000), sep = "_"),
 
 new_prices <- df_temp %>%
   distinct(but_idr_business_unit, sku_idr_sku) %>%
-  mutate(unit_price = sample(seq(0.50, 1000, 0.01), n(), replace = T))
+  mutate(unit_price = abs(round(rnorm(n(), mean = 30, sd = 90), 2)))
 
 df <- df_temp %>%
   left_join(new_prices, by = c("but_idr_business_unit", "sku_idr_sku")) %>%
-  mutate(quantity = sample(seq(1:5), 200000, replace = T, 
-                                     prob = c(0.70,0.15, 0.05, 0.03, 0.02)),
-         turnover = quantity * unit_price)
+  mutate(quantity = sample(seq(1:5), 200000, replace = T),
+         turnover = quantity * unit_price) %>%
+  select(-unit_price)
 
+
+# 3. Plotly ------------------------------------------------------------------
+
+
+plot_ly(data = df, x = ~the_date_transaction, y = ~turnover, type = "histogram")
 
 
    
