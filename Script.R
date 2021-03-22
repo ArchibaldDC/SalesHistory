@@ -5,6 +5,11 @@ if(!require(plotly)) install.packages("plotly")
 if(!require(lubridate)) install.packages("lubridate")
 if(!require(tidyverse)) install.packages("tidyverse")
 
+
+# 2. Set locale (for weekdays) --------------------------------------------
+Sys.setlocale("LC_TIME", "French_Belgium.1252")
+
+
 # 2. Create database -----------------------------------------------------
 ### set seed for reproducible results
 set.seed(2001)
@@ -51,7 +56,8 @@ df_plotly_1 <- df %>%
   summarize(turnover_date = sum(turnover)) %>%
   ungroup()
 
-plot_ly(df_plotly_1, x = ~the_date_transaction, y= ~turnover_date) %>%
+df_plotly_1 %>%
+  plot_ly(x = ~the_date_transaction, y= ~turnover_date) %>%
   add_lines(color = ~but_idr_business_unit, colors = store_colors) %>%
   layout(xaxis = 
            list(
@@ -81,117 +87,59 @@ plot_ly(df_plotly_1, x = ~the_date_transaction, y= ~turnover_date) %>%
              rangeslider = list(type = "date")),
          yaxis = list(title = "Turnover (sales only)"))
 
-#plot with number of items sold per sport per store
+
+#Plot 2
 df_plotly_2 <- df %>%
   filter(tdt_type_detail == "sale") %>%
   mutate(sport = factor(str_replace_all(sku_idr_sku, "_\\d+", ""), levels = c("Biking", "Football",
                                                                               "Running", "Tennis", 
                                                                               "Other"))) %>%
-  count(sport, but_idr_business_unit)
+  count(sport, but_idr_business_unit) %>%
+  pivot_wider(names_from = but_idr_business_unit, values_from = n)
 
 df_plotly_2 %>%
-  plot_ly(x = ~sport, y = ~n, text = ~~but_idr_business_unit,
-        type = "bar",
-        transforms = list(
-          list(
-            type = "filter", 
-            target = ~but_idr_business_unit,
-            operation = "=",
-            value = unique(df_plotly_2$but_idr_business_unit)[1]
-          )
-        )) %>%
+  plot_ly(x = ~sport) %>% 
+  add_trace(y = ~Anderlecht, name = "Anderlecht", type = "bar", visible = T, 
+            color = I("purple"), text = ~Anderlecht, textposition = "outside") %>%
+  add_trace(y = ~Antwerp, name = "Antwerp", type = "bar", visible = F, 
+            color = I("darkblue"), text = ~Antwerp, textposition = "outside") %>%
+  add_trace(y = ~Charleroi, name = "Charleroi", type = "bar", visible = F, 
+            color = I("black"), text = ~Charleroi, textposition = "outside") %>%
+  add_trace(y = ~Evere, name = "Evere", type = "bar", visible = F, 
+            color = I("orange"), text = ~Evere, textposition = "outside") %>%
+  add_trace(y = ~Liège, name = "Liège", type = "bar", visible = F, 
+            color = I("red"), text = ~Liège, textposition = "outside") %>%
+  add_trace(y = ~Wavre, name = "Wavre", type = "bar", visible = F, 
+            color = I("darkgreen"), text = ~Wavre, textposition = "outside") %>%
   layout(
+    yaxis = list(title = "Items Sold"),
+    xaxis = list(title = "Sport"),
     updatemenus = list(
       list(
-        type = "dropdown",
-        active = 0,
+        type = "list", 
+        label = "Store",
         buttons = list(
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[1]),
-               label = unique(df_plotly_2$but_idr_business_unit)[1],
-               value = unique(df_plotly_2$but_idr_business_unit)[1]),
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[2]),
-               label = unique(df_plotly_2$but_idr_business_unit)[2],
-               value = unique(df_plotly_2$but_idr_business_unit)[2]),
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[3]),
-               label = unique(df_plotly_2$but_idr_business_unit)[3],
-               value = unique(df_plotly_2$but_idr_business_unit)[3]),
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[4]),
-               label = unique(df_plotly_2$but_idr_business_unit)[4],
-               value = unique(df_plotly_2$but_idr_business_unit)[4]),
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[5]),
-               label = unique(df_plotly_2$but_idr_business_unit)[5],
-               value = unique(df_plotly_2$but_idr_business_unit)[5]),
-          list(method = "update",
-               args = list("transform[0].value", unique(df_plotly_2$but_idr_business_unit)[6]),
-               label = unique(df_plotly_2$but_idr_business_unit)[6],
-               value = unique(df_plotly_2$but_idr_business_unit)[6])
-        )
-      )
-    )
-  )
+          list(method = "restyle",
+               args = list("visible", c(T,F,F,F,F,F)),
+               label = "Anderlecht"),
+          list(method = "restyle",
+               args = list("visible", c(F,T,F,F,F,F)),
+               label = "Antwerp"),
+          list(method = "restyle",
+               args = list("visible", c(F,F,T,F,F,F)),
+               label = "Charleroi"),
+          list(method = "restyle",
+               args = list("visible", c(F,F,F,T,F,F)),
+               label = "Evere"),
+          list(method = "restyle",
+               args = list("visible", c(F,F,F,F,T,F)),
+               label = "Liège"),
+          list(method = "restyle",
+               args = list("visible", c(F,F,F,F,F,T)),
+               label = "Wavre"))))) #auto argument for text doesn't work see
+#https://github.com/plotly/plotly.js/issues/3115
 
-#violin plot per day, per store
-
-df_plotly_3 <- df %>%
-  mutate(days = weekdays(the_date_transaction))
-
-df_plotly_3 %>%
-  plot_ly(type = "violin") %>%
-  add_trace(x = ~days[df_plotly_3$tdt_type_detail == "sale"], 
-            y = ~turnover[df_plotly_3$tdt_type_detail == "sale"],
-            legendgroup = "Sale",
-            scalegroup = "Sale",
-            name = "Sale",
-            side = "positive",
-            meanline = list(visible = T),
-            color = I("green")) %>%
-  add_trace(x = ~days[df_plotly_3$tdt_type_detail == "return"], 
-            y = ~turnover[df_plotly_3$tdt_type_detail == "return"], 
-            legendgroup = "Return",
-            scalegroup = "Return",
-            name = "Return",
-            side = "negative",
-            meanline = list(visible = T),
-            color = I("red"))
-  
-
-stores <- split(df_plotly_3, df_plotly_3$but_idr_business_unit)
-
-plots <- lapply(stores, function(l){
-  l %>%
-    plot_ly(type = "violin") %>%
-    add_trace(x = ~days[l$tdt_type_detail == "sale"], 
-              y = ~turnover[l$tdt_type_detail == "sale"],
-              legendgroup = "sale",
-              scalegroup = "sale",
-              name = "sale",
-              side = "positive",
-              box = list(visible = T), meanline = list(visible = T),
-              color = I("green")) %>%
-    add_trace(x = ~days[l$tdt_type_detail == "return"], 
-              y = ~turnover[l$tdt_type_detail == "return"], 
-              legendgroup = "return",
-              scalegroup = "return",
-              name = "return",
-              side = "negative",
-              box = list(visible = T), meanline = list(visible = T),
-              color = I("red"))
-})
-
-
-subplot(plots, nrows = 1, shareY = T)
-
-
-# 4. Shiny Set Up ---------------------------------------------------------
-
-   
-
-
+#plot 3
 
 
 
