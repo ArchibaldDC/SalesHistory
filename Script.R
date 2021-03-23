@@ -60,7 +60,7 @@ df_plotly_1 <- df %>%
   mutate(sale_return_proportion = (total_turnover_month_store / total_turnover_store)*100) 
 
 
-df_plotly_1 %>%
+plot_1 <- df_plotly_1 %>%
   plot_ly() %>%
   add_trace(x = ~months[df_plotly_1$tdt_type_detail == "sale" &  df_plotly_1$but_idr_business_unit == "Anderlecht"], 
             y = ~total_turnover_month_store[df_plotly_1$tdt_type_detail == "sale" & df_plotly_1$but_idr_business_unit == "Anderlecht"],
@@ -133,7 +133,7 @@ df_plotly_2 <- df %>%
   ungroup()
 
 
-df_plotly_2 %>%
+plot_2 <- df_plotly_2 %>%
   plot_ly(x = ~the_date_transaction, y= ~turnover_date) %>%
   add_lines(color = ~but_idr_business_unit, colors = store_colors) %>%
   layout(xaxis = 
@@ -225,10 +225,10 @@ plot_3 <- df_plotly_3 %>%
 #https://github.com/plotly/plotly.js/issues/3115
 
 #extra plot
-df_plotl_4 <- df %>%
+df_plotly_4 <- df %>%
   mutate(months = month(the_date_transaction, abbr = F, label = T))
 
-df_plotl_4 %>%
+plot_4 <- df_plotly_4 %>%
   plot_ly() %>%
   add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Anderlecht"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Anderlecht"],
