@@ -98,6 +98,21 @@ df_plotly_2 <- df %>%
 
 df_plotly_2 <- df_plotly_2[rep(1:nrow(df_plotly_2), df_plotly_2$quantity),]
 
+df_plotly_2 <- df_plotly_2 %>%
+  group_by(but_idr_business_unit, sport) %>%
+  mutate(items_sold = sum(quantity)) %>%
+  ungroup() 
+
+df_plotly_2 <- df %>%
+  filter(tdt_type_detail == "sale") %>%
+  mutate(sport = factor(str_replace_all(sku_idr_sku, "_\\d+", ""), levels = c("Biking", 
+                                                                              "Football",
+                                                                              "Running", 
+                                                                              "Tennis", 
+                                                                              "Other")))
+
+df_plotly_2 <- df_plotly_2[rep(1:nrow(df_plotly_2), df_plotly_2$quantity),]
+
 
 df_plotly_2 <- df_plotly_2 %>%
   count(sport, but_idr_business_unit) %>%
@@ -121,7 +136,8 @@ plot_2 <- df_plotly_2 %>%
             color = I("darkgreen"), text = ~Wavre, textposition = "outside") %>%
   layout(
     yaxis = list(title = "Items Sold"),
-    xaxis = list(title = "Sport"),
+    xaxis = list(title = "Sport",
+                 tickformat = "digits"),
     updatemenus = list(
       list(
         type = "list", 
@@ -225,55 +241,55 @@ plot_3 <- df_plotly_3 %>%
 
 #extra plot
 df_plotly_4 <- df %>%
-  mutate(months = month(the_date_transaction, abbr = F, label = T))
+  mutate(weekdays = weekdays(the_date_transaction))
 
 plot_4 <- df_plotly_4 %>%
   plot_ly() %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Anderlecht"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Anderlecht"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Anderlecht"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = T,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Anderlecht"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Anderlecht"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Anderlecht"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = T,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Antwerp"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Antwerp"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Antwerp"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Antwerp"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Antwerp"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Antwerp"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Charleroi"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Charleroi"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Charleroi"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Charleroi"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Charleroi"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Charleroi"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Evere"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Evere"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Evere"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Evere"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Evere"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Evere"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Liège"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Liège"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Liège"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Liège"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Liège"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Liège"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Wavre"], 
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "sale" &  df_plotly_4$but_idr_business_unit == "Wavre"], 
             y = ~turnover[df_plotly_4$tdt_type_detail == "sale" & df_plotly_4$but_idr_business_unit == "Wavre"],
             type = "violin", side = "negative", name = "Sales Turnover", color = I("darkgreen"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
-  add_trace(x = ~months[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Wavre"],
+  add_trace(x = ~weekdays[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Wavre"],
             y = ~turnover[df_plotly_4$tdt_type_detail == "return" & df_plotly_4$but_idr_business_unit == "Wavre"],
             type = "violin", side = "positive", name = "Return Turnover", color = I("darkred"), visible = F,
             box = list(visible = T), meanline = list(visible = T)) %>%
