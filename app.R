@@ -32,7 +32,7 @@ df_temp <-
       prob = sample(seq(0.05, 0.95, by = 0.05), 6)
     )),
     tdt_type_detail = as.factor(sample(
-      c("sale", "return"),
+      c("Sale", "Return"),
       250000,
       replace = T,
       prob = c(0.80, 0.20)
@@ -135,9 +135,11 @@ ui <- fluidPage(
     #text and interface of sidebar
     sidebarPanel(
       width = 3,
+      h3("Data Filters"),
       p(
         "You can set filters with the parameters below. The plots and dataset will automatically be adjusted."
       ),
+      p(strong("Set store filter")),
       checkboxGroupInput(
         #filter for stores
         "store",
@@ -145,6 +147,14 @@ ui <- fluidPage(
         choices = c("Anderlecht", "Antwerp", "Charleroi", "Evere", "Liege", "Wavre"),
         selected = c("Anderlecht", "Antwerp", "Charleroi", "Evere", "Liege", "Wavre")
       ),
+      p(strong("Set transaction type filter")),
+      checkboxGroupInput(
+        "transaction_type",
+        label = "Choose a transaction type",
+        choices = c("Sale", "Return"),
+        selected = "Sale"
+      ),
+      p(strong("Set date filter")),
       dateRangeInput(
         #filter for daterange
         "date_range",
@@ -157,6 +167,7 @@ ui <- fluidPage(
         min = "2020/01/01",
         max = "2020/12/31"
       ),
+      p(strong("Download Datframe (with applied filters)")),
       radioButtons(
         #format choice
         "file_type",
@@ -207,7 +218,7 @@ ui <- fluidPage(
       p(
         "- ",
         strong("sku_idr_sku:"),
-        "the ID of the item that was sold, also shows in which category it belongs."
+        "the ID of the item that was sold or returned, also shows in which category it belongs."
       ),
       br(),
       p("- ",
@@ -248,21 +259,21 @@ ui <- fluidPage(
         "The plots can also be filtered by clicking on the legend labels."
       ),
       br(),
-      h3("Daily Sales"),
+      h3("Daily Turnover"),
       p(
-        "The first plot shows the daily sales history throughout the year, only sales, not returns.
+        "The first plot shows the daily turnover history throughout the year, sales and/or returns can be selected in the menu in the sidebar.
         The date range on the x-axis can be used to visualize smaller time periods, there's also an extra menu provided above.
-        Additionally, browsing over the plot also helps to compare the sales numbers for all the stores on the same day."
+        Additionally, browsing over the plot also helps to compare the turnover numbers for all the stores on the same day."
       ),
       plotlyOutput("plot1"),
       #plot1
       
       br(),
-      h3("Items Sold Per Store"),
+      h3("Items Sold and/or Returned per  Store"),
       p(
-        "The second plot displays how many items per sport have been sold, not returned. The number of transaction is included in the calculations
+        "The second plot displays how many items per sport have been sold and/or returned depending on your filter preferences. The number of transaction is included in the calculations
         (if the item named Tennis_13 was sold four times, it will be counted as four separate entities, not one).
-        The piechart below shows the share of sport items sold."
+        The piechart below shows the share of sport items sold and/or returned."
       ),
       
       plotlyOutput("plot2"),
@@ -314,7 +325,8 @@ server <- function(input, output) {
           input$date_range[1],
           input$date_range[2]
         ),
-        but_idr_business_unit %in% input$store #filters selected in UI part
+        but_idr_business_unit %in% input$store,
+        tdt_type_detail %in% input$transaction_type #filters selected in UI part
       )
   })
   
@@ -344,12 +356,8 @@ server <- function(input, output) {
       }
     )
   output$plot1 <- renderPlotly({
-    #plot1 (daily sales)
+    #plot1 (daily turnover)
     df %>%
-      filter(tdt_type_detail == "sale") %>%
-      group_by(the_date_transaction, but_idr_business_unit) %>%
-      summarize(turnover_date = sum(turnover)) %>%
-      ungroup() %>%
       filter(
         #make plot reactive to filters
         between(
@@ -357,13 +365,17 @@ server <- function(input, output) {
           input$date_range[1],
           input$date_range[2]
         ),
-        but_idr_business_unit %in% input$store
+        but_idr_business_unit %in% input$store,
+        tdt_type_detail %in% input$transaction_type
       ) %>%
+      group_by(the_date_transaction, but_idr_business_unit) %>%
+      summarize(turnover_date = sum(turnover)) %>%
+      ungroup() %>%
       plot_ly(
         x = ~ the_date_transaction,
         y = ~ turnover_date,
         text = ~ round(turnover_date, 2),
-        hovertemplate = paste("Daily sales (in €): %{y:,.2f}") #customize plotly label
+        hovertemplate = paste("Daily turnover (in €): %{y:,.2f}") #customize plotly label
       ) %>%
       add_lines(color = ~ but_idr_business_unit,
                 colors = store_colors) %>%
@@ -414,7 +426,7 @@ server <- function(input, output) {
             rangeslider = list(type = "date") #slider at bottom of plot
           ),
         list(tickformat = "digits"),
-        yaxis = list(title = "Turnover (sales only)"),
+        yaxis = list(title = "Turnover"),
         separators = ".",
         hovermode = "x unified" #put x values together on label when hoovering over it
       )
@@ -434,9 +446,9 @@ server <- function(input, output) {
           input$date_range[1],
           input$date_range[2]
         ),
-        but_idr_business_unit %in% input$store
+        but_idr_business_unit %in% input$store,
+        tdt_type_detail %in% input$transaction_type
       ) %>%
-      filter(tdt_type_detail == "sale") %>%
       mutate(sport = factor(
         str_replace_all(sku_idr_sku, "_\\d+", ""),
         #use regex to extract the sport categories
@@ -461,9 +473,9 @@ server <- function(input, output) {
         legendgroup = ~ sport
       ) %>%
       layout(
-        title = "Items Sold per Store & Sport",
+        title = "Items Sold and/or Returned per Store & Sport",
         barmode = "group",
-        yaxis = list(title = "Items Sold",
+        yaxis = list(title = "Items Sold and/or Returned",
                      tickformat = "digits"),
         xaxis = list(title = "Sport",
                      tickformat = "digits"),
@@ -487,9 +499,9 @@ server <- function(input, output) {
             input$date_range[1],
             input$date_range[2]
           ),
-          but_idr_business_unit %in% input$store
+          but_idr_business_unit %in% input$store,
+          tdt_type_detail %in% input$transaction_type
         ) %>%
-        filter(tdt_type_detail == "sale") %>%
         mutate(sport = factor(
           str_replace_all(sku_idr_sku, "_\\d+", ""),
           levels = c("Biking",
@@ -512,69 +524,162 @@ server <- function(input, output) {
           showlegend = T,
           marker = list(colors = sport_colors)
         ) %>%
-        layout(title = "Share of Items Sold")
+        layout(title = "Share of Items Sold and/or Returned")
       
       
     })
   
   
   output$plot4 <- renderPlotly({
-    #plot4 (Violin plot)
-    df %>%
-      filter(
-        .,
-        between(
-          #make plot reactive to filters
-          the_date_transaction,
-          input$date_range[1],
-          input$date_range[2]
-        ),
-        but_idr_business_unit %in% input$store
-      ) %>%
-      mutate(
-        weekdays = wday(
-          #arrange according to opening days
-          the_date_transaction,
-          week_start = 1,
-          locale = Sys.getlocale("LC_TIME"),
-          #LC_Time locale is set to French_Belgium.1252
-          label = T,
-          abbr = F
+    #plot4 (Violin plot) if else condition based on selected transaction_type, color changes
+    if (input$transaction_type == "Sale") {
+      df %>%
+        filter(
+          .,
+          between(
+            #make plot reactive to filters
+            the_date_transaction,
+            input$date_range[1],
+            input$date_range[2]
+          ),
+          but_idr_business_unit %in% input$store,
+          tdt_type_detail %in% input$transaction_type
+        ) %>%
+        mutate(
+          weekdays = wday(
+            #arrange according to opening days
+            the_date_transaction,
+            week_start = 1,
+            locale = Sys.getlocale("LC_TIME"),
+            #LC_Time locale is set to French_Belgium.1252
+            label = T,
+            abbr = F
+          )
+        ) %>%
+        plot_ly()  %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == input$transaction_type &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == input$transaction_type &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkgreen"),
+          name = "Sale Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)
+        ) %>%
+        layout(
+          xaxis = list(title = "Day"),
+          yaxis = list(title = "Turnover", hoverformat = ".2f"),
+          #2 numbers after decimal values
+          showlegend = T
         )
-      ) %>%
-      plot_ly() %>%
-      add_trace(
-        x = ~ weekdays[df$tdt_type_detail == "sale" &
-                         df$but_idr_business_unit == input$store],
-        #make plot reactive to selected stores
-        y = ~ turnover[df$tdt_type_detail == "sale" &
-                         df$but_idr_business_unit == input$store],
-        type = "violin",
-        side = "negative",
-        color = I("darkgreen"),
-        name = "Sale Turnover",
-        box = list(visible = T),
-        meanline = list(visible = T)
-      ) %>%
-      add_trace(
-        x = ~ weekdays[df$tdt_type_detail == "return" &
-                         df$but_idr_business_unit == input$store],
-        y = ~ turnover[df$tdt_type_detail == "return" &
-                         df$but_idr_business_unit == input$store],
-        type = "violin",
-        side = "positive",
-        color = I("darkred"),
-        name = "Return Turnover",
-        box = list(visible = T),
-        meanline = list(visible = T)
-      ) %>%
-      layout(
-        xaxis = list(title = "Day"),
-        yaxis = list(title = "Turnover", hoverformat = ".2f"),
-        #2 numbers after decimal values
-        showlegend = T,
-        violinmode = "overlay"
-      )
+    }
+    else if (input$transaction_type == "Return"){
+      df %>%
+        filter(
+          .,
+          between(
+            #make plot reactive to filters
+            the_date_transaction,
+            input$date_range[1],
+            input$date_range[2]
+          ),
+          but_idr_business_unit %in% input$store,
+          tdt_type_detail %in% input$transaction_type
+        ) %>%
+        mutate(
+          weekdays = wday(
+            #arrange according to opening days
+            the_date_transaction,
+            week_start = 1,
+            locale = Sys.getlocale("LC_TIME"),
+            #LC_Time locale is set to French_Belgium.1252
+            label = T,
+            abbr = F
+          )
+        ) %>%
+        plot_ly()  %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == input$transaction_type &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == input$transaction_type &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkred"),
+          name = "Return Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)
+        ) %>%
+        layout(
+          xaxis = list(title = "Day"),
+          yaxis = list(title = "Turnover", hoverformat = ".2f"),
+          #2 numbers after decimal values
+          showlegend = T
+        )
+    }
+    else{
+      df %>%
+        filter(
+          .,
+          between(
+            #make plot reactive to filters
+            the_date_transaction,
+            input$date_range[1],
+            input$date_range[2]
+          ),
+          but_idr_business_unit %in% input$store,
+          tdt_type_detail %in% input$transaction_type
+        ) %>%
+        mutate(
+          weekdays = wday(
+            #arrange according to opening days
+            the_date_transaction,
+            week_start = 1,
+            locale = Sys.getlocale("LC_TIME"),
+            #LC_Time locale is set to French_Belgium.1252
+            label = T,
+            abbr = F
+          )
+        ) %>%
+        plot_ly()  %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == input$transaction_type[1] &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == input$transaction_type[1] &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkgreen"),
+          name = "Sales Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)
+        ) %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == input$transaction_type[2] &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == input$transaction_type[2] &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkred"),
+          name = "Return Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)) %>%
+        layout(
+          xaxis = list(title = "Day"),
+          yaxis = list(title = "Turnover", hoverformat = ".2f"),
+          #2 numbers after decimal values
+          showlegend = T,
+          violinmode = "group"
+        )
+    }
+    
+    
+    
+    
   })
   
 }
