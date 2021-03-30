@@ -151,7 +151,7 @@ ui <- fluidPage(
       checkboxGroupInput(
         "transaction_type",
         label = "Choose a transaction type",
-        choices = c("Sale", "Return"),
+        choices = c("Sale" = "Sale", "Return" = "Return"),
         selected = "Sale"
       ),
       p(strong("Set date filter")),
@@ -287,7 +287,7 @@ ui <- fluidPage(
       br(),
       h3(
         strong("Statistical Plot:"),
-        "Violin Plots of Sales vs. Returns for opening days"
+        "Violin Plots of Sales vs. Returns for Opening Days"
       ),
       p(
         "A violin plot shows the entire distribution of the data, the advantage of the violin plot is that
@@ -532,7 +532,62 @@ server <- function(input, output) {
   
   output$plot4 <- renderPlotly({
     #plot4 (Violin plot) if else condition based on selected transaction_type, color changes
-    if (input$transaction_type == "Sale") {
+    if (all(c("Sale", "Return") %in% input$transaction_type)) {
+      df %>%
+        filter(
+          .,
+          between(
+            #make plot reactive to filters
+            the_date_transaction,
+            input$date_range[1],
+            input$date_range[2]
+          ),
+          but_idr_business_unit %in% input$store
+        ) %>%
+        mutate(
+          weekdays = wday(
+            #arrange according to opening days
+            the_date_transaction,
+            week_start = 1,
+            locale = Sys.getlocale("LC_TIME"),
+            #LC_Time locale is set to French_Belgium.1252
+            label = T,
+            abbr = F
+          )
+        ) %>%
+        plot_ly()  %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == "Sale" &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == "Sale" &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkgreen"),
+          name = "Sales Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)
+        ) %>%
+        add_trace(
+          x = ~ weekdays[df$tdt_type_detail == "Return" &
+                           df$but_idr_business_unit == input$store],
+          #make plot reactive to selected stores & transaction types
+          y = ~ turnover[df$tdt_type_detail == "Return" &
+                           df$but_idr_business_unit == input$store],
+          type = "violin",
+          color = I("darkred"),
+          name = "Return Turnover",
+          box = list(visible = T),
+          meanline = list(visible = T)) %>%
+        layout(
+          xaxis = list(title = "Day"),
+          yaxis = list(title = "Turnover", hoverformat = ".2f"),
+          #2 numbers after decimal values
+          showlegend = T,
+          violinmode = "group"
+        )
+    }
+    else if ("Sale" %in% input$transaction_type) {
       df %>%
         filter(
           .,
@@ -576,7 +631,7 @@ server <- function(input, output) {
           showlegend = T
         )
     }
-    else if (input$transaction_type == "Return"){
+    else {
       df %>%
         filter(
           .,
@@ -620,62 +675,7 @@ server <- function(input, output) {
           showlegend = T
         )
     }
-    else{
-      df %>%
-        filter(
-          .,
-          between(
-            #make plot reactive to filters
-            the_date_transaction,
-            input$date_range[1],
-            input$date_range[2]
-          ),
-          but_idr_business_unit %in% input$store,
-          tdt_type_detail %in% input$transaction_type
-        ) %>%
-        mutate(
-          weekdays = wday(
-            #arrange according to opening days
-            the_date_transaction,
-            week_start = 1,
-            locale = Sys.getlocale("LC_TIME"),
-            #LC_Time locale is set to French_Belgium.1252
-            label = T,
-            abbr = F
-          )
-        ) %>%
-        plot_ly()  %>%
-        add_trace(
-          x = ~ weekdays[df$tdt_type_detail == input$transaction_type[1] &
-                           df$but_idr_business_unit == input$store],
-          #make plot reactive to selected stores & transaction types
-          y = ~ turnover[df$tdt_type_detail == input$transaction_type[1] &
-                           df$but_idr_business_unit == input$store],
-          type = "violin",
-          color = I("darkgreen"),
-          name = "Sales Turnover",
-          box = list(visible = T),
-          meanline = list(visible = T)
-        ) %>%
-        add_trace(
-          x = ~ weekdays[df$tdt_type_detail == input$transaction_type[2] &
-                           df$but_idr_business_unit == input$store],
-          #make plot reactive to selected stores & transaction types
-          y = ~ turnover[df$tdt_type_detail == input$transaction_type[2] &
-                           df$but_idr_business_unit == input$store],
-          type = "violin",
-          color = I("darkred"),
-          name = "Return Turnover",
-          box = list(visible = T),
-          meanline = list(visible = T)) %>%
-        layout(
-          xaxis = list(title = "Day"),
-          yaxis = list(title = "Turnover", hoverformat = ".2f"),
-          #2 numbers after decimal values
-          showlegend = T,
-          violinmode = "group"
-        )
-    }
+    
     
     
     
