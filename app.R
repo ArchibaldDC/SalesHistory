@@ -139,6 +139,7 @@ ui <- fluidPage(
       p(
         "You can set filters with the parameters below. The plots and dataset will automatically be adjusted."
       ),
+      br(),
       p(strong("Set store filter")),
       checkboxGroupInput(
         #filter for stores
@@ -147,6 +148,7 @@ ui <- fluidPage(
         choices = c("Anderlecht", "Antwerp", "Charleroi", "Evere", "Liege", "Wavre"),
         selected = c("Anderlecht", "Antwerp", "Charleroi", "Evere", "Liege", "Wavre")
       ),
+      br(),
       p(strong("Set transaction type filter")),
       checkboxGroupInput(
         "transaction_type",
@@ -154,6 +156,7 @@ ui <- fluidPage(
         choices = c("Sale" = "Sale", "Return" = "Return"),
         selected = "Sale"
       ),
+      br(),
       p(strong("Set date filter")),
       dateRangeInput(
         #filter for daterange
@@ -167,73 +170,78 @@ ui <- fluidPage(
         min = "2020/01/01",
         max = "2020/12/31"
       ),
-      p(strong("Download Datframe (with applied filters)")),
-      radioButtons(
-        #format choice
-        "file_type",
-        "Format",
-        choices = c("excel (.xslx)" = "xlsx",
-                    "csv (.csv)" = "csv"),
-        selected = "csv"
-      ),
-      downloadButton("download_filtered", "Download (filtered) dataset"),
-      #download button
-      h1("Original Dataset of Sales History"),
-      h2("Overview"),
-      h3("Dataset variables/columns"),
-      p(
-        "Per request, the dataset simulates the sales and returns turnover numbers for a sport-supply store for the year 2020. the dataset contains 214266 rows (observations) and 7 columns (variables).",
-        br(),
-        br(),
-        em(
-          "It should be noted that Sundays have not been included in the dataset, as stores are generally closed that day."
-        )
-      ),
       br(),
+      h3("Download Dataframe"),
       p(
-        "- ",
-        strong("transaction_id:"),
-        "the name of the transaction and serves as",
-        em("the Primary Key"),
-        "for this dataset. It is assumed that for every transaction, a customer buys only one item,
+        strong("with applied filters"),
+        radioButtons(
+          #format choice
+          "file_type",
+          "Format",
+          choices = c("excel (.xslx)" = "xlsx",
+                      "csv (.csv)" = "csv"),
+          selected = "csv"
+        ),
+        downloadButton("download_filtered", "Download dataset"),
+        #download button
+        br(),
+        h1("Original Dataset of Sales History"),
+        h2("Overview"),
+        h3("Dataset variables/columns"),
+        p(
+          "Per request, the dataset simulates the sales and returns turnover numbers for a sport-supply store for the year 2020. the dataset contains 214266 rows (observations) and 7 columns (variables).",
+          br(),
+          br(),
+          em(
+            "It should be noted that Sundays have not been included in the dataset, as stores are generally closed that day."
+          )
+        ),
+        br(),
+        p(
+          "- ",
+          strong("transaction_id:"),
+          "the name of the transaction and serves as",
+          em("the Primary Key"),
+          "for this dataset. It is assumed that for every transaction, a customer buys only one item,
                    but maybe more than once as the other variables/columns of the dataset will show."
-      ),
-      br(),
-      p("- ",
-        strong("but_idr_business_unit:"),
-        "the name of the store."),
-      br(),
-      p(
-        "- ",
-        strong("tdt_type_detail:"),
-        "shows if the transaction was a sale or a return."
-      ),
-      br(),
-      p(
-        "- ",
-        strong("the_date_transaction:"),
-        "the date of the transaction."
-      ),
-      br(),
-      p(
-        "- ",
-        strong("sku_idr_sku:"),
-        "the ID of the item that was sold or returned, also shows in which category it belongs."
-      ),
-      br(),
-      p("- ",
-        strong("quantity:"),
-        "amount of items sold or returned."),
-      br(),
-      p(
-        "- ",
-        strong("turnover:"),
-        "the total turnover of the transaction/sale.",
-        strong("IMPORTANT:"),
-        "the turnover variable is the unit price x quantity, per request,
+        ),
+        br(),
+        p("- ",
+          strong("but_idr_business_unit:"),
+          "the name of the store."),
+        br(),
+        p(
+          "- ",
+          strong("tdt_type_detail:"),
+          "shows if the transaction was a sale or a return."
+        ),
+        br(),
+        p(
+          "- ",
+          strong("the_date_transaction:"),
+          "the date of the transaction."
+        ),
+        br(),
+        p(
+          "- ",
+          strong("sku_idr_sku:"),
+          "the ID of the item that was sold or returned, also shows in which category it belongs."
+        ),
+        br(),
+        p("- ",
+          strong("quantity:"),
+          "amount of items sold or returned."),
+        br(),
+        p(
+          "- ",
+          strong("turnover:"),
+          "the total turnover of the transaction/sale.",
+          strong("IMPORTANT:"),
+          "the turnover variable is the unit price x quantity, per request,
       the unit price is not displayed in the dataset",
       strong("but"),
       "can be found in the code that created the dataset."
+        )
       )
     ),
     mainPanel(
@@ -308,7 +316,6 @@ ui <- fluidPage(
     )
   )
 )
-
 
 
 # Define server logic = Part of the APP that is reactive and DOES something
