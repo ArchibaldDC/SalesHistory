@@ -110,7 +110,7 @@ sport_colors <-
 
 ###
 df2 <-
-  df[rep(1:nrow(df), df$quantity),] #df2 = df for barplots with added rows for quantity values
+  df[rep(1:nrow(df), df$quantity), ] #df2 = df for barplots with added rows for quantity values
 
 
 
@@ -434,7 +434,7 @@ server <- function(input, output) {
   
   output$plot2 <- renderPlotly({
     #plot 2 (barchart)
-    df2 <- df[rep(1:nrow(df), df$quantity),]
+    df2 <- df[rep(1:nrow(df), df$quantity), ]
     
     
     df2 %>%
@@ -489,7 +489,7 @@ server <- function(input, output) {
   output$plot3 <-
     renderPlotly({
       #plot3 (piechart), code structure is almost identical as plot above
-      df2 <- df[rep(1:nrow(df), df$quantity),]
+      df2 <- df[rep(1:nrow(df), df$quantity), ]
       
       df2 %>%
         filter(
@@ -578,7 +578,8 @@ server <- function(input, output) {
           color = I("darkred"),
           name = "Return Turnover",
           box = list(visible = T),
-          meanline = list(visible = T)) %>%
+          meanline = list(visible = T)
+        ) %>%
         layout(
           xaxis = list(title = "Day"),
           yaxis = list(title = "Turnover", hoverformat = ".2f"),
